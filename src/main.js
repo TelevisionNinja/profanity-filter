@@ -6,7 +6,7 @@ function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function createWhitelistRegex(whitelistArray) {
+export function createWhitelistRegex(whitelistArray) {
     let regexString = '\\b(';
     let i = 0;
 
@@ -22,7 +22,16 @@ function createWhitelistRegex(whitelistArray) {
     return new RegExp(regexString, 'gi');
 }
 
-function createEntriesForAllMappings(hashMap) {
+const vowels = [
+    'a',
+    'e',
+    'i',
+    'o',
+    'u'
+];
+const star = '*';
+
+export function createEntriesForAllMappings(hashMap) {
     const setMap = new Map();
 
     // convert to sets
@@ -65,10 +74,18 @@ function createEntriesForAllMappings(hashMap) {
         setMap.set(key, [...values]);
     }
 
+    // add support for star censored vowels
+    for (let i = 0, n = vowels.length; i < n; i++) {
+        const vowel = vowels[i];
+        if (setMap.has(vowel)) {
+            setMap.get(vowel).push(star);
+        }
+    }
+
     return setMap;
 }
 
-function createBlacklistRegex(blacklistArray, charMap) {
+export function createBlacklistRegex(blacklistArray, charMap) {
     let regex = '';
     let i = 0;
 
@@ -198,7 +215,7 @@ function createBlacklistRegex(blacklistArray, charMap) {
     return new RegExp(regex, 'gi');
 }
 
-function filter(string, blacklistRegex, whitelistRegex) {
+export function filter(string, blacklistRegex, whitelistRegex) {
     const whitelistMatches = [...string.matchAll(whitelistRegex)];
 
     for (let i = 0; i < whitelistMatches.length; i++) {
@@ -316,25 +333,8 @@ function main() {
     //-------------------------------------------------------------
     // mappings and regex
 
-    const mappings = Object.entries(charMapJson);
-    const charMap = createEntriesForAllMappings(mappings);
-
-    // add support for star censored vowels
-    const vowels = [
-        'a',
-        'e',
-        'i',
-        'o',
-        'u'
-    ];
-    const star = '*';
-    const starCharMap = charMap;
-
-    for (let i = 0, n = vowels.length; i < n; i++) {
-        starCharMap.get(vowels[i]).push(star);
-    }
-
-    const blacklistRegex = createBlacklistRegex(Object.values(blacklistJson), starCharMap);
+    const charMap = createEntriesForAllMappings(Object.entries(charMapJson));
+    const blacklistRegex = createBlacklistRegex(Object.values(blacklistJson), charMap);
     const whitelistRegex = createWhitelistRegex(Object.values(whitelistJson));
 
     //-------------------------------------------------------------
